@@ -2,7 +2,6 @@ import { Octokit } from '@octokit/core';
 import type { OctokitOptions } from '@octokit/core/dist-types/types.d';
 import * as YAML from 'yaml';
 import { LoggerService } from '@backstage/backend-plugin-api';
-import { AAPApiClient } from './apis';
 import type { OctokitResponse } from '@octokit/types/dist-types/OctokitResponse';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -18,11 +17,12 @@ import {
   AAPTemplate,
   Organization,
   UseCase,
-  AnsibleConfig,
   CreatedTemplate,
   ParsedTemplate,
   BackstageAAPShowcase,
-} from '../../types';
+  IAAPService,
+  AnsibleConfig,
+} from '@ansible/backstage-rhaap-common';
 
 export type GithubConfig = {
   url: string;
@@ -51,14 +51,16 @@ export class UseCaseMaker {
   private readonly logger: LoggerService;
   private readonly scmType: string;
   private readonly organization!: Organization;
-  private apiClient!: AAPApiClient;
+  private apiClient!: IAAPService;
   private ansibleConfig: AnsibleConfig;
   private readonly useCases: UseCase[];
   private showCaseFolder: string;
+  private token: string;
   private octokit: Octokit;
   private scmIntegration:
     | GithubIntegrationConfig
     | GitLabIntegrationConfig
+    | undefined
     | null = null;
   constructor({
     ansibleConfig,
@@ -67,16 +69,19 @@ export class UseCaseMaker {
     scmType,
     apiClient,
     useCases,
+    token,
   }: {
     ansibleConfig: AnsibleConfig;
     scmType: string;
-    apiClient: AAPApiClient | null;
+    apiClient: IAAPService | null;
     organization: Organization | null;
     logger: LoggerService;
     useCases: UseCase[];
+    token: string;
   }) {
     this.ansibleConfig = ansibleConfig;
     this.logger = logger;
+    this.token = token;
     this.scmType = scmType;
     if (organization) {
       this.organization = organization;
@@ -86,8 +91,8 @@ export class UseCaseMaker {
     }
     this.useCases = useCases;
     this.showCaseFolder =
-      this.ansibleConfig..type === 'file'
-        ? (this.ansibleConfig.?.target ?? '')
+      this.ansibleConfig.rhaap?.?.type === 'file'
+        ? (this.ansibleConfig.rhaap?.?.target ?? '')
         : '';
     if (this.scmType === 'Github') {
       this.scmIntegration = this.ansibleConfig.githubIntegration;
@@ -176,6 +181,7 @@ export class UseCaseMaker {
       response = await this.apiClient.getJobTemplatesByName(
         [name],
         this.organization,
+        this.token,
       );
     } catch (e) {
       this.logger.error(
@@ -712,7 +718,7 @@ export class UseCaseMaker {
   }) {
     this.logger.info(`Begin saving templates locally.`);
     const { parsedTemplates, type = 'file' } = options;
-    if (!this.ansibleConfig.) {
+    if (!this.ansibleConfig.rhaap?.) {
       throw new Error('Show case location not defined.');
     }
     const dirPath = this.showCaseFolder;
@@ -1088,7 +1094,7 @@ export class UseCaseMaker {
       this.logger.info(`End commit and push.`);
     } catch (e) {
       this.logger.error(`[${UseCaseMaker.pluginLogName}] Git error ${e}`);
-      throw new Error('Something went wrong: git error.');
+      throw new Error(`Something went wrong: ${e}`);
     } finally {
       try {
         this.logger.info(
@@ -1177,7 +1183,7 @@ export class UseCaseMaker {
       this.logger.info(`End commit and push.`);
     } catch (e) {
       this.logger.error(`[${UseCaseMaker.pluginLogName}] Git error ${e}`);
-      throw new Error('Something went wrong: git error.');
+      throw new Error(`Something went wrong: ${e}`);
     } finally {
       try {
         this.logger.info(
@@ -1199,30 +1205,32 @@ export class UseCaseMaker {
   private async pushToGithub(options: { parsedTemplates: ParsedTemplate[] }) {
     const { parsedTemplates } = options;
     if (
-      !this.ansibleConfig?.?.target ||
+      !this.ansibleConfig?.rhaap?.?.target ||
       !this.scmIntegration?.token ||
-      !this.ansibleConfig?.?.gitEmail ||
-      !this.ansibleConfig?.?.gitUser
+      !this.ansibleConfig?.rhaap?.?.gitEmail ||
+      !this.ansibleConfig?.rhaap?.?.gitUser
     ) {
       throw new Error('Missing show case target github configuration');
     }
     let url;
     try {
-      url = new URL(this.ansibleConfig..target);
+      url = new URL(this.ansibleConfig.rhaap..target);
     } catch (e) {
       this.logger.error(
-        `[${UseCaseMaker.pluginLogName}] Not valid github url ${this.ansibleConfig..target}.`,
+        `[${UseCaseMaker.pluginLogName}] Not valid github url ${this.ansibleConfig.rhaap..target}.`,
       );
       throw new Error(
-        `Not valid github url ${this.ansibleConfig..target}.`,
+        `Not valid github url ${this.ansibleConfig.rhaap..target}.`,
       );
     }
     const githubConfig = {
       url: `${url.origin}${url.pathname.replace('/orgs/', '/')}`,
-      githubBranch: this.ansibleConfig..gitBranch,
-      githubEmail: this.ansibleConfig..gitEmail,
-      githubUser: this.ansibleConfig..gitUser,
-      githubRepo: this.ansibleConfig..target.split('/').pop(),
+      githubBranch: this.ansibleConfig.rhaap..gitBranch,
+      githubEmail: this.ansibleConfig.rhaap..gitEmail,
+      githubUser: this.ansibleConfig.rhaap..gitUser,
+      githubRepo: this.ansibleConfig.rhaap..target
+        .split('/')
+        .pop(),
       githubToken: this.scmIntegration?.token,
       githubOrganizationName: url.pathname.startsWith('/orgs/')
         ? url.pathname.split('/')[2]
@@ -1244,30 +1252,32 @@ export class UseCaseMaker {
   private async pushToGitLab(options: { parsedTemplates: ParsedTemplate[] }) {
     const { parsedTemplates } = options;
     if (
-      !this.ansibleConfig?.?.target ||
+      !this.ansibleConfig?.rhaap?.?.target ||
       !this.scmIntegration?.token ||
-      !this.ansibleConfig?.?.gitEmail ||
-      !this.ansibleConfig?.?.gitUser
+      !this.ansibleConfig?.rhaap?.?.gitEmail ||
+      !this.ansibleConfig?.rhaap?.?.gitUser
     ) {
       throw new Error('Missing show case target gitlab configuration');
     }
     let url;
     try {
-      url = new URL(this.ansibleConfig..target);
+      url = new URL(this.ansibleConfig.rhaap..target);
     } catch (e) {
       this.logger.error(
-        `[${UseCaseMaker.pluginLogName}] Not valid gitlab url ${this.ansibleConfig..target}.`,
+        `[${UseCaseMaker.pluginLogName}] Not valid gitlab url ${this.ansibleConfig.rhaap..target}.`,
       );
       throw new Error(
-        `Not valid gitlab url ${this.ansibleConfig..target}.`,
+        `Not valid gitlab url ${this.ansibleConfig.rhaap..target}.`,
       );
     }
     const gitlabConfig = {
       url: `${url.origin}${url.pathname.replace('/orgs/', '/')}`,
-      gitlabBranch: this.ansibleConfig..gitBranch,
-      gitlabEmail: this.ansibleConfig..gitEmail,
-      gitlabUser: this.ansibleConfig..gitUser,
-      gitlabRepo: this.ansibleConfig..target.split('/').pop(),
+      gitlabBranch: this.ansibleConfig.rhaap..gitBranch,
+      gitlabEmail: this.ansibleConfig.rhaap..gitEmail,
+      gitlabUser: this.ansibleConfig.rhaap..gitUser,
+      gitlabRepo: this.ansibleConfig.rhaap..target
+        .split('/')
+        .pop(),
       gitlabToken: this.scmIntegration?.token,
       gitlabOrganizationName: url.pathname.startsWith('/orgs/')
         ? url.pathname.split('/')[2]
@@ -1556,7 +1566,7 @@ export class UseCaseMaker {
         }
       }),
     );
-    if (this.ansibleConfig.?.type === 'url') {
+    if (this.ansibleConfig.rhaap?.?.type === 'url') {
       if (this.scmType === 'Github') {
         await this.pushToGithub({ parsedTemplates });
       } else if (this.scmType === 'Gitlab') {
