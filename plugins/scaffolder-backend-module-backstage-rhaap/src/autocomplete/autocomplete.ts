@@ -9,17 +9,24 @@ import {
 export async function handleAutocompleteRequest({
   resource,
   token,
+  context,
   config,
   logger,
   ansibleService,
 }: {
   resource: string;
   token: string;
+  context?: Record<string, string>;
   config: Config;
   logger: LoggerService;
   ansibleService: IAAPService;
 }): Promise<{ results: any[] }> {
   const ansibleConfig = getAnsibleConfig(config);
+
+  if (context) {
+    logger.debug(`Autocomplete context for ${resource}:`, context);
+  }
+
   if (resource === 'verbosity') {
     return { results: getVerbosityLevels() };
   }

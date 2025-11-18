@@ -126,7 +126,7 @@ spec:
       name: 'My Job Template'
       action: rhaap:launch-job-template
       input:
-        token: '${{ parameters.token }}'
+        token: '{% raw %}'${{ parameters.token }}'{% endraw %}'
         values:
           template: 'My Job Template'
           # Additional input values
@@ -134,8 +134,8 @@ spec:
     text:
       - title: 'Job executed successfully'
         content: |
-          **Job ID:** ${{ steps['launch-job'].output.data.id }}
-          **Job STATUS:** ${{ steps['launch-job'].output.data.status }}
+          **Job ID:** {% raw %}${{ steps['launch-job'].output.data.id }}{% endraw %}
+          **Job STATUS:** {% raw %}${{ steps['launch-job'].output.data.status }}{% endraw %}
 ```
 
 ### Metadata Fields
@@ -408,7 +408,7 @@ When upgrading from older versions:
 
 ## Related Documentation
 
-- [Catalog Backend Module](catalog.md) - Main catalog synchronization
-- [Auth Provider](auth.md) - AAP OAuth2 authentication setup
-- [Scaffolder Actions](scaffolder.md) - Additional scaffolder actions
-- [Self-Service Portal](self-service.md) - Enhanced UI for job templates
+- [Catalog Backend Module](../plugins/catalog.md) - Main catalog synchronization
+- [Auth Provider](../plugins/auth.md) - AAP OAuth2 authentication setup
+- [Scaffolder Actions](../plugins/scaffolder.md) - Additional scaffolder actions
+- [Self-Service Portal](../plugins/self-service.md) - Enhanced UI for job templates

@@ -1,668 +1,546 @@
-[![CI](https://github.com/ansible/ansible-backstage-plugins/actions/workflows/pr.yml/badge.svg?branch=main&event=schedule)](https://github.com/ansible/ansible-backstage-plugins/actions/workflows/pr.yml)
+# Ansible Backstage Plugins
 
-# [Backstage](https://backstage.io)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-To start the app, run:
+Welcome to the Ansible plugins for Backstage project! This repository provides plugins for [backstage.io](https://backstage.io) to deliver Ansible-specific user experiences in the developer portal, enabling self-service automation and integration with Ansible Automation Platform (AAP).
 
-```sh
+## Table of Contents
+
+- [Overview](#overview)
+- [Features](#features)
+- [Prerequisites](#prerequisites)
+- [Getting Started](#getting-started)
+  - [Initial Setup](#initial-setup)
+  - [Configuration](#configuration)
+  - [Running Locally](#running-locally)
+- [Repository Structure](#repository-structure)
+- [Available Plugins](#available-plugins)
+- [Development](#development)
+  - [Testing](#testing)
+  - [Building](#building)
+  - [Plugin Development](#plugin-development)
+- [Troubleshooting](#troubleshooting)
+- [Documentation](#documentation)
+- [Contributing](#contributing)
+- [Security](#security)
+- [License](#license)
+
+## Overview
+
+The Ansible Backstage Plugins project brings Ansible Automation Platform capabilities into Backstage, enabling developers to:
+
+- Browse and launch job templates
+- Manage inventories, projects, and credentials
+- View job execution history and results
+- Create self-service automation workflows
+- Integrate AAP with software catalogs
+- Generate scaffolder actions for AAP resources
+
+This is a monorepo containing multiple plugins that work together to provide a comprehensive Ansible experience in Backstage.
+
+## Features
+
+- **Frontend Integration**: Browse resources directly in Backstage UI
+- **Self-Service Automation**: Enable developers to trigger automations without AAP knowledge
+- **Catalog Integration**: Sync AAP resources into Backstage catalog
+- **Scaffolder Actions**: Create software templates that interact with AAP
+- **Authentication**: Integrate AAP authentication with Backstage auth
+- **RBAC Support**: Leverage AAP's role-based access control
+- **Dynamic Plugin Support**: Deploy as dynamic plugins in Red Hat Developer Hub
+
+## Prerequisites
+
+Before setting up the development environment, ensure you have:
+
+### Required Software
+
+- **Node.js**: Version **20** or **22** (LTS versions)
+  - Check version: `node --version`
+  - Install via [nvm](https://github.com/nvm-sh/nvm) or from [nodejs.org](https://nodejs.org/)
+
+- **Yarn**: Version **4.9.2** (managed via Corepack)
+  - Corepack is included with Node.js 16.10+
+  - Enable Corepack: `corepack enable`
+  - Verify: `yarn --version`
+
+- **Git**: For version control
+  - Check version: `git --version`
+
+### System Requirements
+
+- **Operating System**: Linux, macOS, or Windows with WSL2
+- **RAM**: Minimum 8GB (16GB recommended for optimal build performance)
+- **Disk Space**: At least 2GB free space for dependencies and build artifacts
+
+### Optional But Recommended
+
+- **Ansible Automation Platform**: Access to an AAP instance for full functionality
+  - Version 2.4 or later recommended
+  - API access token with appropriate permissions
+
+- **GitHub Account**: For GitHub integration features
+  - Personal Access Token (PAT) with `repo` scope
+
+## Getting Started
+
+### Initial Setup
+
+1. **Clone the Repository**
+
+```bash
+git clone https://github.com/ansible/ansible-backstage-plugins.git
+cd ansible-backstage-plugins
+```
+
+2. **Install Dependencies**
+
+Run the installation script to set up all dependencies:
+
+```bash
 ./install-deps
 ```
 
-Once the install step is done update `app-config.yaml` file with changes to `integrations.github.token` and other settings which are mentioned as `changeme`.
+This script will:
 
-Then start the project with
+- Install Yarn 4.x via Corepack
+- Install all workspace dependencies
+- Set up Git hooks via Husky for pre-commit checks
 
-```sh
-yarn start
-```
+**Note**: On systems with strict security policies, some native package builds may fail. This is usually acceptable as they're often optional dependencies.
 
-# Ansible plugins for Red Hat Developer Hub
+3. **Verify Installation**
 
-## Plugin httpd registry creation steps -
-
-#### These steps are valid for both helm and operator installation -
-
-### Install OpenShift cluster on AWS using CLI installer
-
-Prerequisite: Make sure that the AWS account is configured locally using the AWS configure command.
-
-- Generate a key pair for cluster node SSH access - [doc](https://docs.openshift.com/container-platform/4.10/installing/installing_aws/installing-aws-default.html#ssh-agent-using_installing-aws-default)
-- Obtaining the installation program based on the local OS installation - [doc](https://docs.openshift.com/container-platform/4.10/installing/installing_aws/installing-aws-default.html#installation-obtaining-installer_installing-aws-default)
-- Deploying the cluster - [doc](https://docs.openshift.com/container-platform/4.10/installing/installing_aws/installing-aws-default.html#installation-launching-installer_installing-aws-default)
-
-### Downloading the plugins tar from GitHub releases.
-
-Download the plugin .tar files from the [GitHub release page](https://github.com/ansible/ansible-backstage-plugins/releases).
-to the following location:
+Check that installation was successful:
 
 ```bash
-DYNAMIC_PLUGIN_ROOT_DIR=<ansible-backstage-plugins-local-path-changeme>/.tmp/dynamic-plugin-root
-cd $DYNAMIC_PLUGIN_ROOT_DIR
-<download-plugin-tar-here>
+# Check Node.js version
+node --version  # Should show v20.x.x or v22.x.x
+
+# Check Yarn version
+yarn --version  # Should show 4.9.1 or similar
+
+# Verify workspace structure
+yarn workspaces list
 ```
 
-### (Or) Baking the plugins for setup
+### Configuration
+
+#### 1. Create Local Configuration File
+
+For local development, create a local configuration file that won't be committed:
 
 ```bash
-DYNAMIC_PLUGIN_ROOT_DIR=<ansible-backstage-plugins-local-path-changeme>/.tmp/dynamic-plugin-root
-git clone git@github.com:ansible/ansible-backstage-plugins.git
-cd ansible-backstage-plugins
-./.github/actions/pack/pack.sh
-ls -l $DYNAMIC_PLUGIN_ROOT_DIR
-echo "Integrity Hash: $INTEGRITY_HASH"
+cp app-config.yaml app-config.local.yaml
 ```
 
-This step verifies that all the plugin .tar files are in one location.
+#### 2. Configure Required Settings
 
-All the tarballs that were downloaded or baked.
+Edit `app-config.local.yaml` and update the following fields marked as `changeme`:
 
-```bash
-local$ ls
-ansible-plugin-backstage-rhaap-1.0.0.tgz
-ansible-plugin-backstage-rhaap-backend-1.0.0.tgz
-ansible-plugin-scaffolder-backend-module-backstage-rhaap-1.0.0.tgz
-```
-
-#### Bake plugins as OCI image
-
-The built plugins can packed as OCI image and pushed to container image registry.
-To use this, set needed environ vars and run `pack.sh`.
-
-```bash
-cd ansible-backstage-plugins
-export OCI_REGISTRY_NAMESPACE=quay.io/my-namespace/
-export OCI_REGISTRY_USERNAME=TODO
-export OCI_REGISTRY_PASSWORD=TODO
-export OCI_IMAGE_PUSH=true
-./.github/actions/pack/pack.sh
-```
-
-This example will try to push N different images, like;
-
-- quay.io/my-namespace/backstage-rhaap:vA.B.C
-- quay.io/my-namespace/self-service:vD.E.F
-- ...
-
-Make sure to create needed image repositories before.
-
-### Create and upload the plugins to build an httpd service and call it plugin-registry
-
-- Create and Upload tar to the plugin registry
-
-```bash
-export KUBECONFIG=<path-to-oc-config-file-changeme>/kubeconfig
-oc project <YOUR_PROJECT_OR_NAMESPACE_CHANGEME>
-oc new-build httpd --name=plugin-registry --binary
-oc start-build plugin-registry --from-dir=$DYNAMIC_PLUGIN_ROOT_DIR --wait
-oc new-app --image-stream=plugin-registry
-```
-
-#### To skip the integrity check during installation, set the following environment variable.
-
-Note - this is not required for the production environment
-
-```bash
-kubectl set env deployment/rhdh-backstage -c install-dynamic-plugins -e SKIP_INTEGRITY_CHECK="true"
-```
-
-Ensure the tar files are uploaded to build named plugin-registry-{Number} by connecting to the pod's terminal. Sample output:
-
-```bash
-sh-4.4$ ls
-ansible-plugin-backstage-rhaap-1.0.0.tgz
-ansible-plugin-backstage-rhaap-backend-1.0.0.tgz
-ansible-plugin-scaffolder-backend-module-backstage-rhaap-1.0.0.tgz
-```
-
-### Repack with version update (to update the plugin version or re-push the plugin to the registry)
-
-1. Run the npm pack steps again with the updated code source.
-2. Switch to the RHDH namespace using the oc project command.
-3. Run the following command:
-
-```bash
-oc start-build plugin-registry --from-dir=$DYNAMIC_PLUGIN_ROOT_DIR --wait
-```
-
-## Installing Ansible plugins with RHDH instance running on Openshift using Helm Chart
-
-#### It is considered that a Helm installation of Red Hat Developer Hub is done by following the official documentation.
-
-### To add/ enable the dynamic plugins
-
-1. In the UI of the ROSA instance, navigate to the project.
-2. Open `ConfigMap > dynamic-plugins`.
-3. Add the following code:
+##### Backend Secret (Required)
 
 ```yaml
-data:
-  dynamic-plugins.yaml: |
-    includes:
-    - dynamic-plugins.default.yaml
-    plugins:
-    - disabled: false
-      package: http://plugin-registry:8080/ansible-plugin-backstage-rhaap-x.y.z.tgz
-      integrity: <integrity sha - download .integrity files from the alongside plugin release>
-      pluginConfig:
-        dynamicPlugins:
-          frontend:
-            ansible.plugin-backstage-rhaap:
-              appIcons:
-              - importName: AnsibleLogo
-                name: AnsibleLogo
-              dynamicRoutes:
-              - importName: AnsiblePage
-                menuItem:
-                  icon: AnsibleLogo
-                  text: Ansible
-                path: /ansible
-    - disabled: false
-      package: http://plugin-registry:8080/ansible-plugin-scaffolder-backend-module-backstage-rhaap-x.y.z.tgz
-      integrity: <integrity sha - download .integrity files from the alongside plugin release>
-      pluginConfig:
-        dynamicPlugins:
-          backend:
-            ansible.plugin-scaffolder-backend-module-backstage-rhaap: null
-    - disabled: false
-      package: http://plugin-registry:8080/ansible-plugin-backstage-rhaap-backend-x.y.z.tgz
-      integrity: <integrity sha - download .integrity files from the alongside plugin release>
-      pluginConfig:
-        dynamicPlugins:
-          backend:
-            ansible.plugin-backstage-rhaap-backend: null
-    - disabled: false
-      package: ./dynamic-plugins/dist/janus-idp-backstage-plugin-rbac
-    - disabled: false
-      package: ./dynamic-plugins/dist/backstage-plugin-catalog-backend-module-github-org-dynamic
-    - disabled: false
-      package: ./dynamic-plugins/dist/janus-idp-backstage-plugin-analytics-provider-segment
+backend:
+  auth:
+    keys:
+      # Generate a secret with: openssl rand -base64 32
+      - secret: YOUR_SECRET_HERE
 ```
 
-### Add the ansible-devtools-server in your project within the ROSA instance for the scaffolder plugin to work.
-
-#### Steps specific to RHDH Helm installation with 1.2y.z releases-
-
-In the ROSA instance from the UI go to the project open `Helm > <project-namespace>` and add the following
-
-to enable `community-ansible-dev-tools` container image:
+##### GitHub Integration (Required)
 
 ```yaml
-upstream:
-  backstage: |
-    ...
-    extraContainers:
-      - command:
-          - adt
-          - server
-        image: 'ghcr.io/ansible/community-ansible-dev-tools:latest'
-        imagePullPolicy: IfNotPresent
-        name: ansible-devtools-server
-        ports:
-          - containerPort: 8000
-```
-
-to enable  `ansible-automation-platform-25-ansible-dev-tools-rhel8` image:
-
-Steps to get Red Hat registry authentication ready -
-
-- Follow, Getting a Red Hat Login steps [here](https://access.redhat.com/RegistryAuthentication)
-- Check your Registry Service Accounts [here](https://access.redhat.com/terms-based-registry/)
-- Open your Token information > OpenShift Secret and download the pull-secrets.yml and rename it to `rhdh-secret-brew-registry.yml`
-- Use the following command to add the secret `kubectl create -f rhdh-secret-brew-registry.yml --namespace=<YOUR_NAMESPACE>`
-
-```yaml
-upstream:
-  backstage: |
-    ...
-    extraContainers:
-      - command:
-          - adt
-          - server
-        image: >-
-          brew.registry.redhat.io/rh-osbs/ansible-automation-platform-25-ansible-dev-tools-rhel8:latest
-        imagePullPolicy: IfNotPresent
-        name: ansible-devtools-server
-        ports:
-          - containerPort: 8000
-    image:  # do not create this entry this entry should be present in the Helm config
-      pullPolicy: Always
-      pullSecrets:
-        - ...
-        - rhdh-secret-brew-registry   # just this pull secret reference
-      registry: registry.redhat.io
-      repository: rhdh/rhdh-hub-rhel9
-      tag: 1.2-105
-```
-
-#### Steps specific to RHDH Helm installation with 1.3y.z releases-
-
-Edit the redhat-developer-hub pod from the redhat-developer-hub deployment, once we are in the Edit Deployment page.
-
-Navigate to `spec.template.spec.[containers]` and now edit the containers list to add the desired sidecar container.
-
-```yaml
-spec:
-  template:
-    spec:
-      containers:
-        - ...
-        - name: ansible-devtools-server
-          image: 'ghcr.io/ansible/community-ansible-dev-tools:latest'
-          command:
-            - adt
-            - server
-          ports:
-            - containerPort: 8000
-              protocol: TCP
-          resources: {}
-          terminationMessagePath: /dev/termination-log
-          terminationMessagePolicy: File
-          imagePullPolicy: IfNotPresent
-```
-
-Do note that the configMap names may vary when it is a 1.3y.z release.
-
-All configuration specific to app-config goes in - `ConfigMap > redhat-developer-hub-app-config`
-
-- catalog.locations
-- ansible (all)
-- auth
-- integrations
-- enabled
-- signInPage
-- permission (rbac)
-
-This list is specific to Ansible Plugins.
-
-Example -
-
-```yaml
-...
-catalog:
-  ...
-  locations:
-    - type: url
-      target: https://github.com/ansible/ansible-rhdh-templates/blob/main/all.yaml
-      rules:
-        - allow: [Template]
-ansible:
-  devSpaces:
-    baseUrl: '<DEVSPACES_URL>'
-  creatorService:
-    baseUrl: '127.0.0.1'
-    port: '8000'
-  rhaap:
-    baseUrl: '<AAP_URL>'
-    token: '<AAP_TOKEN>'
-    checkSSL: false
-auth:
-  environment: development
-  providers:
-    ...
-    github:
-      development:
-        clientId: '<APP_CLIENT_ID>'
-        clientSecret: '<APP_SECRET>'
 integrations:
   github:
     - host: github.com
-      token: <TOKEN_GH>
-...
-permission:
-  enabled: true
-  rbac:
-    admin:
-      users:
-        - name: user:default/gh-user
-        ...
-      superUsers:
-        - name: user:default/gh-admin
-        - name: user:default/gh-user
-        ...
+      # Create a token at: https://github.com/settings/tokens
+      # Required scopes: repo (for private repos) or public_repo (for public only)
+      token: ${GITHUB_TOKEN} # Or paste token directly
 ```
 
-For dynamic plugins use the following - `ConfigMap > redhat-developer-hub-dynamic-plugins`
+##### AAP Integration (Optional but Recommended)
 
 ```yaml
----
-data:
-  dynamic-plugins.yaml: |
-    includes:
-    - dynamic-plugins.default.yaml
-    plugins:
-      - disabled: false
-        package: 'http://plugin-registry:8080/ansible-plugin-backstage-rhaap-x.y.z.tgz'
-        integrity: <Update_integrity_hash_here>
-        pluginConfig:
-          dynamicPlugins:
-            frontend:
-              ansible.plugin-backstage-rhaap:
-                appIcons:
-                  - importName: AnsibleLogo
-                    name: AnsibleLogo
-                dynamicRoutes:
-                  - importName: AnsiblePage
-                    menuItem:
-                      icon: AnsibleLogo
-                      text: Ansible
-                    path: /ansible
-      - disabled: false
-        package: >-
-          http://plugin-registry:8080/ansible-plugin-backstage-rhaap-backend-x.y.z.tgz
-        integrity: <Update_integrity_hash_here>
-        pluginConfig:
-          dynamicPlugins:
-            backend:
-              ansible.plugin-backstage-rhaap-backend: null
-      - disabled: false
-        package: >-
-          http://plugin-registry:8080/ansible-plugin-scaffolder-backend-module-backstage-rhaap-x.y.z.tgz
-        integrity: <Update_integrity_hash_here>
-        pluginConfig:
-          dynamicPlugins:
-            backend:
-              ansible.plugin-scaffolder-backend-module-backstage-rhaap: null
-      - package: './dynamic-plugins/dist/backstage-plugin-catalog-backend-module-github-dynamic'
-        disabled: false
-        pluginConfig:
-          catalog:
-            providers:
-              github:
-                myorg:
-                  organization: '<GITHUB_ORG_NAME>'
-                  schedule:
-                    # supports cron, ISO duration, "human duration" (used below)
-                    frequency: { minutes: 30}
-                    # supports ISO duration, "human duration (used below)
-                    timeout: { minutes: 3}
-                    initialDelay: { seconds: 15}
-      - disabled: false
-        package: ./dynamic-plugins/dist/janus-idp-backstage-plugin-rbac
-      - disabled: false
-        package: >-
-          ./dynamic-plugins/dist/janus-idp-backstage-plugin-analytics-provider-segment
+aap:
+  # Your Ansible Automation Platform instance URL
+  baseUrl: https://your-aap-instance.example.com
+
+  # AAP API token
+  # Create at: AAP UI → Users → Tokens → Add
+  token: ${AAP_TOKEN} # Or paste token directly
+
+  # SSL verification (set to true in production)
+  checkSSL: false
 ```
 
-### Add analytics service configuration in your RHDH ROSA instance for the plugins
+#### 3. Set Environment Variables (Alternative)
 
-The analytics/ telemetry capabilities are enabled with the RHDH build, for specific settings please follow this [doc](https://docs.redhat.com/en/documentation/red_hat_developer_hub/1.2/html-single/administration_guide_for_red_hat_developer_hub/index#disabling-telemetry-data-collection_assembly-install-rhdh-ocp)
-
-Details about the analytics gathered by Ansible plugins are -
-
-- If the event originates from the Ansible plugin:
-- Capture Ansible-specific events -
-  - Events are filtered by subject, plugin_id and attributes that are related to Ansible.
-- Analytics are captured from feedback form and sentiment data.
-- If the event does not originate from the Ansible plugin:
-- Analytics are captured from Catalog item, On click events to the 'Open Ansible project in OpenShift Dev Spaces' button.
-- Analytics are captured in the Create page Click/Navigate events for 'Choose' button to select an Ansible template.
-- Analytics are captured in the template input form after clicking 'Choose' and clicking events for the 'Review' button for Ansible software template.
-- Analytics are captured in the Confirmation page on clicking events for 'Create' button for an Ansible software template.
-
-### Add template configurations to your RHDH ROSA instance for the plugins
-
-1. In the UI of the ROSA instance, navigate to the project.
-2. Open `ConfigMap > <project-namespace>-app-config`.
-3. Add the following code:
-
-```yaml
-data:
-  app-config.yaml: |
-    catalog:
-      ...
-      locations:
-        ...
-        - type: url
-          target: https://github.com/ansible/ansible-rhdh-templates/blob/main/all.yaml
-          rules:
-            - allow: [Template]
-```
-
-Note - if there is a need for a custom SCM support a fork of the above repo can be made with a set of changes mentioned below.
-
-- Update the enum and enum name in the templates [ref](https://github.com/ansible/ansible-rhdh-templates/blob/main/templates/collections.yaml#L29) to the desired source control name and source control URL.
-- Use a suitable publish action for the source control being used.
-
-### Add ansible configuration in your RHDH ROSA instance for the plugins
-
-In the ROSA instance from the UI go to the project open `ConfigMap > <project-namespace>-app-config` add the following
-
-```yaml
-data:
-  app-config.yaml: |
-    ...
-    ansible:
-      automationHub:
-        baseUrl: '<https://MyAutomationHubUrl/>'
-      devSpaces:
-        baseUrl: '<https://MyOwnDevSpacesUrl/>'
-      creatorService:
-        baseUrl: '127.0.0.1'
-        port: '8000'
-      rhaap:
-        baseUrl: '<https://MyAapSubcriptionUrl>'
-        token: '<TopSecretAAPToken>'
-        checkSSL: true
-```
-
-### Add RBAC configuration in your RHDH ROSA instance
-
-In the ROSA instance from the UI go to the project open `ConfigMap > <project-namespace>-app-config` add the following
-
-```yaml
-data:
-  app-config.yaml: |
-    plugins:
-      - disabled: false
-        package: ./dynamic-plugins/dist/janus-idp-backstage-plugin-rbac
-    ...
-    permission:
-      enabled: true
-      rbac:
-        admin:
-          users:
-            - name: user:default/<user-scm-ida>
-            - name: user:default/<user-scm-idb>
-          superUsers:
-            - name: user:default/<user-scm-ida>
-```
-
-Upon upgrading the ConfigMaps and Helm chart configuration, by clicking on Upgrade the RHDH pod would redeploy with loaded plugins
-
-It is advised to use the latest available plugin version that can be found under release artifacts.
-
-## Installing Ansible plugins with RHDH (1.2) instance running on Openshift using Operator
-
-- Follow the Operator installation steps for the RHDH instance (pause at the namespaces section).
-- With the clean namespace before Operator Backed is being used to install RHDH operator.
-- Take a backup of the configMap `backstage-default-config` in the namespace that defaults to `rhdh-operator`
-- Use the following commands
+Instead of editing the config file, you can set environment variables:
 
 ```bash
-export KUBECONFIG=/…/ROSA/kubeconfig
-oc get configmap backstage-default-config -n rhdh-operator -o yaml > backupOfRhdhOperatorConfig
+# Create a .env file (this file is gitignored)
+cat > .env << EOF
+# Backend
+BACKEND_SECRET=$(openssl rand -base64 32)
+
+# GitHub Integration
+GITHUB_TOKEN=ghp_your_token_here
+
+# AAP Integration
+AAP_BASE_URL=https://your-aap-instance.example.com
+AAP_TOKEN=your-aap-token-here
+AAP_CHECK_SSL=false
+
+# Auth (for production)
+AUTH_SIGNING_KEY=$(openssl rand -base64 32)
+EOF
 ```
 
-- Follow steps to create a httpd container registry, steps are at the beginning of this document.
-- `backupOfRhdhOperatorConfig` access the back up and copy the `deployment.yaml: |-` section
-- Create a config map named `showcase-config`
+#### 4. Additional Configuration Options
+
+<details>
+<summary><b>Authentication Providers</b></summary>
 
 ```yaml
-kind: ConfigMap
-apiVersion: v1
-metadata:
-  name: showcase-config
-data:
-  deployment.yaml: |-
-    ... # this is where the sidecar container also needs to be added, basically append it to the copied content
-            - resources: {}
-              terminationMessagePath: /dev/termination-log
-              name: ansible-devtools-server
-              command:
-                - adt
-                - server
-              ports:
-                - containerPort: 8000
-                  protocol: TCP
-              imagePullPolicy: IfNotPresent
-              terminationMessagePolicy: File
-              image: 'ghcr.io/ansible/community-ansible-dev-tools:latest'
+auth:
+  environment: development # Set to 'production' for production
+  providers:
+    github:
+      development:
+        clientId: ${AUTH_GITHUB_CLIENT_ID}
+        clientSecret: ${AUTH_GITHUB_CLIENT_SECRET}
 ```
 
-- Make sure the sidecar container is added as a new entry in the `spec.template.spec.[containers].<entryForSideCar>`
-- Create a config map named `my-backstage-config-auth`, the name can be anything. In RHDH (1.3) if should have a default entry `
-backstage-appconfig-developer-hub`
+</details>
+
+### Running Locally
+
+#### Start the Development Server
+
+```bash
+yarn start
+```
+
+This will:
+
+- Start the backend on `http://localhost:7007`
+- Start the frontend on `http://localhost:3000`
+- Enable hot module reloading for development
+- Open your browser automatically
+
+#### What to Expect
+
+1. **First Launch**: Initial compilation takes 2-3 minutes
+2. **Browser Opens**: Navigate to `http://localhost:3000`
+3. **Login**: Use Guest login or configured auth provider
+4. **Hot Reload**: Changes to source files automatically reload
+
+#### Startup Logs
+
+Normal startup logs include:
+
+```
+[0] info: Loaded config from app-config.yaml, app-config.local.yaml
+[0] info: Created database connection
+[1] info: Listening on :7007
+[0] webpack compiled successfully
+```
+
+#### Accessing Different Sections
+
+- **Home**: `http://localhost:3000`
+- **Catalog**: `http://localhost:3000/catalog`
+- **Ansible Plugin**: `http://localhost:3000/ansible`
+- **Ansible Self-service Plugin**: `http://localhost:3000/self-service` (AAP Related)
+- **API Docs**: `http://localhost:7007/api/docs`
+
+## Repository Structure
+
+```
+ansible-backstage-plugins/
+├── packages/                  # Core Backstage application
+│   ├── app/                  # Frontend React application
+│   └── backend/              # Backend Node.js service
+│
+├── plugins/                   # Ansible-specific plugins
+│   ├── backstage-rhaap/                    # Provides access to the frontend plugin
+│   ├── backstage-rhaap-common/             # Shared utilities and types
+│   ├── auth-backend-module-rhaap-provider/ # Authentication provider
+│   ├── catalog-backend-module-rhaap/       # Catalog integration
+│   ├── scaffolder-backend-module-backstage-rhaap/ # Scaffolder actions
+│   └── self-service/                       # Self-service UI plugin
+│
+├── docs/                      # Documentation
+│   ├── features/             # Feature documentation
+│   └── plugins/              # Plugin-specific docs
+│
+├── examples/                  # Example configurations
+│   ├── entities.yaml         # Sample catalog entities
+│   ├── org.yaml              # Sample organization structure
+│   └── template/             # Sample software template
+│
+├── app-config.yaml           # Main configuration file
+├── app-config.production.yaml # Production configuration
+├── package.json              # Root package.json with workspaces
+├── tsconfig.json             # TypeScript configuration
+└── yarn.lock                 # Dependency lock file
+```
+
+## Available Plugins
+
+### Frontend Plugins
+
+#### [@ansible/plugin-backstage-rhaap](./plugins/backstage-rhaap)
+
+Enables the Ansible sidebar option and provides access to the frontend plugin
+
+**Features**:
+
+- Ansible specific UI
+- Allows to view ansible specific catalog information
+- Allows to view and run ansible specific software templates
+- Ansible related learning paths.
+
+#### [@ansible/plugin-self-service](./plugins/self-service)
+
+Self-service UI plugin for simplified automation access.
+
+**Features**:
+
+- Simplified job template interface
+- Role-based view filtering
+- Quick launch capabilities
+
+### Backend Plugins
+
+#### [@ansible/auth-backend-module-rhaap-provider](./plugins/auth-backend-module-rhaap-provider)
+
+Authentication provider for integrating AAP authentication with Backstage.
+
+#### [@ansible/catalog-backend-module-rhaap](./plugins/catalog-backend-module-rhaap)
+
+Catalog provider that syncs AAP resources into the Backstage catalog.
+
+**Syncs**:
+
+- Organizations
+- Teams
+- Users
+- Projects
+- Inventories
+
+#### [@ansible/scaffolder-backend-module-backstage-rhaap](./plugins/scaffolder-backend-module-backstage-rhaap)
+
+Scaffolder actions for creating software templates that interact with AAP.
+
+**Actions**:
+
+- Launch job templates
+- Create projects
+- Manage inventories
+- Configure credentials
+
+### Shared Packages
+
+#### [@ansible/plugin-backstage-rhaap-common](./plugins/backstage-rhaap-common)
+
+Shared utilities, types, and API clients used across all plugins.
+
+## Development
+
+### Testing
+
+#### Run Unit Tests
+
+```bash
+# Run all tests once
+yarn test
+
+# Run tests in watch mode
+yarn test:watch
+
+# Run tests with coverage
+yarn test:all
+```
+
+#### Test Specific Plugin
+
+```bash
+# Test a specific plugin
+yarn workspace @ansible/plugin-backstage-rhaap test
+
+# Test with coverage
+yarn workspace @ansible/plugin-backstage-rhaap test --coverage
+```
+
+#### Coverage Requirements
+
+- Maintain >80% code coverage for all plugins
+- Coverage reports are generated in `coverage/` directory
+- View HTML report: `open coverage/lcov-report/index.html`
+
+### Building
+
+#### Build All Packages
+
+```bash
+# Type check
+yarn tsc
+
+# Build all packages
+yarn build:all
+```
+
+## Troubleshooting
+
+### Common Issues and Solutions
+
+#### Issue: `yarn install` fails with native package errors
+
+**Solution**: Some native packages (like `esbuild`) may fail in restricted environments. This is usually acceptable:
+
+```bash
+yarn install --immutable || echo "Some optional dependencies failed, continuing..."
+```
+
+#### Issue: Out of memory during build
+
+**Solution**: Increase Node.js memory:
+
+```bash
+export NODE_OPTIONS="--max-old-space-size=16384"
+yarn build:all
+```
+
+#### Issue: Port 3000 or 7007 already in use
+
+**Solution**: Either stop the conflicting process or use different ports:
+
+```bash
+# Find process using port
+lsof -ti:3000 | xargs kill -9  # macOS/Linux
+
+# Or configure different ports in app-config.local.yaml
+```
+
+#### Issue: AAP connection fails with SSL errors
+
+**Solution**: For development, disable SSL verification:
 
 ```yaml
-kind: ConfigMap
-apiVersion: v1
-metadata:
-  name: my-backstage-config-auth
-data:
-  app-config-appropriate.yaml: |
-    app:
-      baseUrl: <RHDH_BASE_ROUTE>
-    backend:
-      auth:
-        externalAccess:
-          - type: legacy
-            options:
-              subject: legacy-default-config
-              secret: "${BACKEND_SECRET}"
-      baseUrl: <RHDH_BASE_ROUTE>
-      cors:
-        origin: <RHDH_BASE_ROUTE>
-    ...
-    catalog:
-      ...
-      locations:
-        - type: url
-          target: https://github.com/ansible/ansible-rhdh-templates/blob/main/all.yaml
-          rules:
-            - allow: [Template]
-    ansible:
-      devSpaces:
-        baseUrl: '<DEVSPACES_URL>'
-      creatorService:
-        baseUrl: '127.0.0.1'
-        port: '8000'
-      rhaap:
-        baseUrl: '<AAP_URL>'
-        token: '<AAP_TOKEN>'
-        checkSSL: false
-    auth:
-      environment: development
-      providers:
-        ...
-        github:
-          development:
-            clientId: '<APP_CLIENT_ID>'
-            clientSecret: '<APP_SECRET>'
-    integrations:
-      github:
-        - host: github.com
-          token: <TOKEN_GH>
-    ...
-    permission:
-      enabled: true
-      rbac:
-        admin:
-          users:
-            - name: user:default/gh-user
-            ...
-          superUsers:
-            - name: user:default/gh-admin
-            - name: user:default/gh-user
-            ...
+aap:
+  checkSSL: false
 ```
 
-- Create a config map named `my-dynamic-plugins-config-cm`, the name can be anything. In RHDH (1.3) if should have a default entry `backstage-dynamic-plugins-developer-hub`
+**For production**, ensure proper SSL certificates are configured.
 
-```yaml
-kind: ConfigMap
-apiVersion: v1
-metadata:
-  name: my-dynamic-plugins-config-cm
-data:
-  dynamic-plugins.yaml: |
-    includes:
-      - dynamic-plugins.default.yaml
-    plugins:
-      - disabled: false
-        package: 'http://plugin-registry:8080/ansible-plugin-backstage-rhaap-x.y.z.tgz'
-        integrity: <Update_integrity_hash_here>
-        pluginConfig:
-          dynamicPlugins:
-            frontend:
-              ansible.plugin-backstage-rhaap:
-                appIcons:
-                  - importName: AnsibleLogo
-                    name: AnsibleLogo
-                dynamicRoutes:
-                  - importName: AnsiblePage
-                    menuItem:
-                      icon: AnsibleLogo
-                      text: Ansible
-                    path: /ansible
-      - disabled: false
-        package: >-
-          http://plugin-registry:8080/ansible-plugin-backstage-rhaap-backend-x.y.z.tgz
-        integrity: <Update_integrity_hash_here>
-        pluginConfig:
-          dynamicPlugins:
-            backend:
-              ansible.plugin-backstage-rhaap-backend: null
-      - disabled: false
-        package: >-
-          http://plugin-registry:8080/ansible-plugin-scaffolder-backend-module-backstage-rhaap-x.y.z.tgz
-        integrity: <Update_integrity_hash_here>
-        pluginConfig:
-          dynamicPlugins:
-            backend:
-              ansible.plugin-scaffolder-backend-module-backstage-rhaap: null
-      - package: './dynamic-plugins/dist/backstage-plugin-catalog-backend-module-github-dynamic'
-        disabled: false
-        pluginConfig:
-          catalog:
-            providers:
-              github:
-                myorg:
-                  organization: '<GITHUB_ORG_NAME>'
-                  schedule:
-                    # supports cron, ISO duration, "human duration" (used below)
-                    frequency: { minutes: 30}
-                    # supports ISO duration, "human duration (used below)
-                    timeout: { minutes: 3}
-                    initialDelay: { seconds: 15}
-      - disabled: false
-        package: ./dynamic-plugins/dist/janus-idp-backstage-plugin-rbac
-      - disabled: false
-        package: >-
-          ./dynamic-plugins/dist/janus-idp-backstage-plugin-analytics-provider-segment
+#### Issue: GitHub integration not working
+
+**Solution**: Verify token has correct scopes:
+
+```bash
+# Test token
+curl -H "Authorization: token YOUR_TOKEN" https://api.github.com/user
 ```
 
-- Once the config maps are created, we can stich things together while we create the RHDH operator instance.
+Required scopes: `repo` (private repos) or `public_repo` (public only)
 
-```yaml
-apiVersion: rhdh.redhat.com/v1alpha1
-kind: Backstage
-metadata:
-  name: developer-hub
-spec:
-  application:
-    appConfig:
-      configMaps:
-        - name: my-backstage-config-auth # our custom configMap for app config
-      mountPath: /opt/app-root/src
-    dynamicPluginsConfigMapName: my-dynamic-plugins-config-cm # our custom configMap for dynamic plugins
-  database:
-    enableLocalDb: true
-  rawRuntimeConfig:
-    backstageConfig: showcase-config # the showcase config that was created with the backup configuration
+#### Issue: Plugins not loading
+
+**Solution**: Clear build cache and rebuild:
+
+```bash
+yarn clean
+yarn install
+yarn build:all
+yarn start
 ```
 
-- Now click on create. And things should be good!
+#### Issue: TypeScript errors after updating dependencies
 
-## How to test plugins for ansible experience
+**Solution**: Rebuild TypeScript declarations:
 
-See [README-ansible-experience.md](README-ansible-experience.md).
+```bash
+yarn tsc --build --clean
+yarn tsc
+```
+
+### Getting Help
+
+If you encounter issues:
+
+1. Check existing [GitHub Issues](https://github.com/ansible/ansible-backstage-plugins/issues)
+2. Review plugin-specific README files
+3. Consult the [Documentation](#documentation)
+4. Ask in [GitHub Discussions](https://github.com/ansible/ansible-backstage-plugins/discussions)
+
+## Documentation
+
+### General Documentation
+
+- **[Installation Guide](./docs/installation.md)**: Deployment instructions
+- **[Features Overview](./docs/index.md)**: Comprehensive feature documentation
+
+### Plugin Documentation
+
+- **[Frontend Plugin](./docs/plugins/backstage-frontend.md)**: AAP frontend integration
+- **[Self-Service Plugin](./docs/plugins/self-service.md)**: Simplified automation UI
+- **[Auth Provider](./docs/plugins/auth.md)**: AAP authentication
+- **[Catalog Module](./docs/plugins/catalog.md)**: Catalog integration
+- **[Scaffolder Module](./docs/plugins/scaffolder.md)**: Scaffolder actions
+
+### Feature Documentation
+
+- **[External Authentication](./docs/features/external-authentication.md)**
+- **[Job Templates](./docs/features/job-templates.md)**
+- **[Users, Teams & Organizations](./docs/features/users-teams-organizations.md)**
+
+### Additional Resources
+
+- [Backstage Documentation](https://backstage.io/docs/)
+
+## Contributing
+
+We welcome contributions! Please see our [Contributing Guide](./CONTRIBUTING.md) for details on:
+
+- Code of Conduct
+- Development workflow
+- Coding standards
+- Pull request process
+- Testing requirements
+
+### Quick Start for Contributors
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests
+5. Run `yarn lint:all` and `yarn test:all`
+6. Submit a pull request
+
+### Release Process
+
+For information on how releases are managed, see [RELEASE_PROCESS.md](./RELEASE_PROCESS.md).
+
+## Security
+
+For information about reporting security vulnerabilities, see [SECURITY.md](./SECURITY.md).
+
+## License
+
+This project is licensed under the **Apache License 2.0**. See [LICENSE](./LICENSE) for details.
+
+By contributing to this project, you agree that your contributions will be licensed under the Apache License 2.0.
+
+## Project Status
+
+This project is actively maintained by the Ansible team at Red Hat. We appreciate all contributions and feedback from the community!
+
+## Support
+
+- **Issues**: [GitHub Issues](https://github.com/ansible/ansible-backstage-plugins/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/ansible/ansible-backstage-plugins/discussions)
+
+---
+
+Made with ❤️ by the Ansible team

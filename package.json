@@ -12,12 +12,12 @@
     "start": "NODE_OPTIONS=\"${NODE_OPTIONS:-} --no-node-snapshot\" backstage-cli repo start",
     "build:backend": "yarn workspace backend build",
     "build:all": "backstage-cli repo build --all",
-    "build-image": "yarn workspace backend build-image",
+    "build": "tsc && backstage-cli repo build",
     "tsc": "tsc",
     "tsc:full": "tsc --skipLibCheck false --incremental false",
     "clean": "backstage-cli repo clean",
-    "test": "NODE_OPTIONS=\"$NODE_OPTIONS --experimental-vm-modules\" backstage-cli repo test --watch=false",
-    "test:watch": "NODE_OPTIONS=\"$NODE_OPTIONS --experimental-vm-modules\" backstage-cli repo test",
+    "test": "NODE_OPTIONS=\"${NODE_OPTIONS:-} --experimental-vm-modules\" backstage-cli repo test --watch=false",
+    "test:watch": "NODE_OPTIONS=\"${NODE_OPTIONS:-} --experimental-vm-modules\" backstage-cli repo test",
     "test:all": "NODE_OPTIONS=\"--experimental-vm-modules\" backstage-cli repo test --coverage",
     "test:e2e": "playwright test",
     "fix": "backstage-cli repo fix",
@@ -25,10 +25,7 @@
     "lint:all": "backstage-cli repo lint",
     "lint-staged": "lint-staged -p 10",
     "prettier:check": "prettier --check .",
-    "new": "backstage-cli new",
-    "build": "tsc && backstage-cli repo build",
-    "export-dynamic": "janus-cli package package-dynamic-plugins --tag quay.io/ansible/ansible-backstage-plugins:$TAG",
-    "export-local": "janus-cli package package-dynamic-plugins --export-to ${DYNAMIC_PLUGINS_ROOT:-./dynamic-plugins}"
+    "new": "backstage-cli new"
   },
   "workspaces": {
     "packages": [
@@ -43,14 +40,16 @@
     "@janus-idp/cli": "^3.6.1",
     "@playwright/test": "^1.32.3",
     "@spotify/prettier-config": "^12.0.0",
-    "@types/jest": "^29.5.14",
+    "@types/jest": "^30.0.0",
     "@types/node": "^22.13.4",
     "@types/webpack-env": "^1.18.8",
+    "eslint-plugin-jest": "^29.0.1",
     "husky": "8.0.3",
     "jest-environment-node": "^29.7.0",
     "lint-staged": "15.2.10",
     "node-gyp": "^10.0.0",
     "prettier": "^2.3.2",
+    "sonarqube-scanner": "^4.3.2",
     "typescript": "~5.8.0"
   },
   "resolutions": {
