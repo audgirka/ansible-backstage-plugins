@@ -23,24 +23,33 @@ interface Collection {
 const MCPSERVER_VARS = [
   {
     role: 'aws_ccapi_mcp',
-    vars: {},
+    vars: {
+      aws_ccapi_mcp_version: 'latest',
+    },
   },
   {
     role: 'aws_cdk_mcp',
-    vars: {},
+    vars: {
+      aws_cdk_mcp_version: 'latest',
+    },
   },
   {
     role: 'aws_core_mcp',
-    vars: {},
+    vars: {
+      aws_core_mcp_version: 'latest',
+    },
   },
   {
     role: 'aws_iam_mcp',
-    vars: {},
+    vars: {
+      aws_iam_mcp_version: 'latest',
+    },
   },
   {
     role: 'azure_mcp',
     vars: {
       azure_mcp_namespaces: ['az'],
+      azure_mcp_version: 'latest',
     },
   },
   {
@@ -327,7 +336,7 @@ export function createEEDefinitionAction(options: {
         .toLowerCase()
         .replace(/[^a-z0-9-_]/g, '-')
         .replace(/-+/g, '-') // Replace multiple consecutive dashes with a single dash
-        .replace(/^-|-$/g, ''); // Remove leading and trailing dashes
+        .replace(/(?:^-)|(?:-$)/g, ''); // Remove leading and trailing dashes
 
       ctx.output('contextDirName', contextDirName);
 
