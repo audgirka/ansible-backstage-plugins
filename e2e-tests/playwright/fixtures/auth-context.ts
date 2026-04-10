@@ -1,77 +1,71 @@
-import { test as base, chromium, BrowserContext } from '@playwright/test';
+import { test as base, BrowserContext } from '@playwright/test';
 import { loginAAP } from '../utils/auth';
 
-// Shared context that persists across all tests in the worker
-let sharedContext: BrowserContext | null = null;
-let isAuthenticated = false;
-
 /**
- * Custom fixture that provides a shared authenticated browser context
- * The context stays open for all tests, preserving the OAuth session
+ * Shared authenticated browser context fixture.
+ *
+ * Each Playwright worker gets ONE persistent browser context with a live
+ * OAuth session. Individual tests receive fresh pages inside that context,
+ * so cookies (including rotated refresh tokens) are preserved across tests
+ * without needing storageState files.
+ *
+ * Why not storageState?  The AAP OAuth backend rotates the refresh token on
+ * every use. Playwright's storageState creates a NEW context per test with
+ * the SAME (stale) cookies, so the second test always fails.  A shared
+ * context avoids this because cookies are updated in-place.
  */
-export const test = base.extend<{ authenticatedContext: BrowserContext }>({
-  // Worker-scoped fixture that creates and maintains the shared context
-  authenticatedContext: [
+export const test = base.extend<
+  // per-test fixtures (empty — page is overridden below)
+  Record<string, never>,
+  // worker-scoped fixtures
+  { workerContext: BrowserContext }
+>({
+  workerContext: [
     async ({ browser }, use) => {
-      // Create context once per worker
-      if (!sharedContext) {
-        console.log('[Shared Context] Creating persistent browser context...');
-        sharedContext = await browser.newContext({
-          baseURL: process.env.BASE_URL || 'http://localhost:7071',
-          ignoreHTTPSErrors: true,
-          viewport: { width: 1920, height: 1080 },
-        });
+      console.log('[Auth] Creating shared context, logging in...');
+      const context = await browser.newContext({
+        baseURL: process.env.BASE_URL || 'http://localhost:7071',
+        ignoreHTTPSErrors: true,
+        viewport: { width: 1920, height: 1080 },
+      });
 
-        // Login once with retry on failure
-        console.log('[Shared Context] Performing one-time login...');
-        const loginPage = await sharedContext.newPage();
+      // Set default timeouts matching playwright.config.ts
+      context.setDefaultNavigationTimeout(
+        process.env.PLAYWRIGHT_NAVIGATION_TIMEOUT
+          ? parseInt(process.env.PLAYWRIGHT_NAVIGATION_TIMEOUT)
+          : 30000,
+      );
+      context.setDefaultTimeout(
+        process.env.PLAYWRIGHT_ACTION_TIMEOUT
+          ? parseInt(process.env.PLAYWRIGHT_ACTION_TIMEOUT)
+          : 30000,
+      );
 
-        let loginSuccess = false;
-        let attempts = 0;
-        const maxAttempts = 3;
+      const page = await context.newPage();
+      await loginAAP(page);
+      await page.close();
+      console.log('[Auth] Shared context ready');
 
-        while (!loginSuccess && attempts < maxAttempts) {
-          attempts++;
-          try {
-            console.log(
-              `[Shared Context] Login attempt ${attempts}/${maxAttempts}...`,
-            );
-            await loginAAP(loginPage);
-            loginSuccess = true;
-            console.log('[Shared Context] ✓ Login successful');
-          } catch (error) {
-            console.log(
-              `[Shared Context] Login attempt ${attempts} failed:`,
-              (error as Error).message,
-            );
-            if (attempts < maxAttempts) {
-              console.log('[Shared Context] Retrying login...');
-              await loginPage.goto('/'); // Reset to home page
-              await loginPage.waitForTimeout(2000);
-            } else {
-              throw new Error(
-                `Failed to login after ${maxAttempts} attempts: ${(error as Error).message}`,
-              );
-            }
-          }
-        }
-
-        await loginPage.close();
-        isAuthenticated = true;
-        console.log(
-          '[Shared Context] ✓ Session will be preserved across all tests',
-        );
-      }
-
-      await use(sharedContext);
-      // Don't close context - keep it alive for all tests
+      await use(context);
+      await context.close();
     },
     { scope: 'worker' },
   ],
 
-  // Override page to use the authenticated context
-  page: async ({ authenticatedContext }, use) => {
-    const page = await authenticatedContext.newPage();
+  // Each test gets a fresh page in the shared authenticated context.
+  // The warmup navigation ensures the SPA is fully initialized (JS bundles
+  // cached, auth cookies processed) before the test's own beforeEach runs.
+  page: async ({ workerContext }, use) => {
+    const page = await workerContext.newPage();
+
+    // Warm up: cold SPA start from about:blank can take 15-30s on CI.
+    // Navigating here absorbs that cost so the test's goto is fast.
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
+    await page
+      .locator('main')
+      .waitFor({ state: 'visible', timeout: 45000 })
+      .catch(() => {});
+
     await use(page);
     await page.close();
   },

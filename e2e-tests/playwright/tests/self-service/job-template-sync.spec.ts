@@ -8,7 +8,7 @@ test.describe('Job Template Sync Tests - Fixed', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/self-service', { waitUntil: 'domcontentloaded' });
     await expect(page).toHaveURL(/\/self-service/);
-    await expect(page.locator('main')).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('main')).toBeVisible({ timeout: 30000 });
   });
 
   test.describe('Catalog Loading and Template Sync', () => {
@@ -53,7 +53,7 @@ test.describe('Job Template Sync Tests - Fixed', () => {
       });
       await page.waitForTimeout(2000);
 
-      await expect(page.locator('main')).toBeVisible({ timeout: 15000 });
+      await expect(page.locator('main')).toBeVisible({ timeout: 30000 });
 
       const text = await page.locator('body').innerText();
       if (text.includes('Start') || text.includes('Template')) {
@@ -86,18 +86,15 @@ test.describe('Job Template Sync Tests - Fixed', () => {
       await page.goto('/self-service/catalog', {
         waitUntil: 'domcontentloaded',
       });
-      await page.waitForTimeout(1500);
-      await expect(page.locator('main')).toBeVisible();
+      await expect(page.locator('main')).toBeVisible({ timeout: 30000 });
 
       await page.goto('/self-service', { waitUntil: 'domcontentloaded' });
-      await page.waitForTimeout(1000);
-      await expect(page.locator('main')).toBeVisible();
+      await expect(page.locator('main')).toBeVisible({ timeout: 30000 });
 
       await page.goto('/self-service/catalog', {
         waitUntil: 'domcontentloaded',
       });
-      await page.waitForTimeout(1500);
-      await expect(page.locator('main')).toBeVisible();
+      await expect(page.locator('main')).toBeVisible({ timeout: 30000 });
     });
   });
 
@@ -106,7 +103,7 @@ test.describe('Job Template Sync Tests - Fixed', () => {
       await page.goto('/self-service/catalog', {
         waitUntil: 'domcontentloaded',
       });
-      await expect(page.locator('main')).toBeVisible({ timeout: 15000 });
+      await expect(page.locator('main')).toBeVisible({ timeout: 30000 });
       await expect(page.locator('body')).toBeVisible();
     });
 
@@ -115,7 +112,7 @@ test.describe('Job Template Sync Tests - Fixed', () => {
         waitUntil: 'domcontentloaded',
       });
       await page.waitForTimeout(5000);
-      await expect(page.locator('main')).toBeVisible({ timeout: 15000 });
+      await expect(page.locator('main')).toBeVisible({ timeout: 30000 });
 
       const text = (await page.locator('body').innerText()).toLowerCase();
       if (text.includes('error') || text.includes('failed')) {

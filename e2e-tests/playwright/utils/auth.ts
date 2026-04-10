@@ -243,41 +243,6 @@ export async function loginAAP(page: Page) {
 }
 
 /**
- * Login to AAP with session caching
- * Similar to Cypress cy.session() but with Playwright's storage state
- */
-export async function loginAAPWithSession(page: Page) {
-  const storageStatePath = 'playwright/.auth/user.json';
-
-  // Try to use existing session
-  try {
-    // Check if session file exists and load it
-    await page.context().storageState({ path: storageStatePath });
-
-    // Verify session is still valid
-    await page.goto('/');
-    const isLoggedIn = await page
-      .getByRole('banner')
-      .getByText('Templates')
-      .isVisible({ timeout: 5000 })
-      .catch(() => false);
-
-    if (isLoggedIn) {
-      // Session is valid, no need to login
-      return;
-    }
-  } catch {
-    // Session doesn't exist or is invalid, continue with login
-  }
-
-  // Perform login
-  await loginAAP(page);
-
-  // Save session state for reuse
-  await page.context().storageState({ path: storageStatePath });
-}
-
-/**
  * Login to GitHub with 2FA
  * Migrated from Cypress Common.LogintoGithub()
  */

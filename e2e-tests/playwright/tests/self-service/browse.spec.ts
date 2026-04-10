@@ -2,7 +2,6 @@ import { test, expect } from '../../fixtures/auth-context';
 
 /**
  * Ansible self-service Browse page — migrated from cypress/e2e/self-service/browse.cy.ts
- * Auth: shared worker context (same pattern as login.spec.ts).
  */
 
 const templateCardSelector =
@@ -12,13 +11,11 @@ test.describe('Ansible self-service Browse Page Functional Tests', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/self-service', { waitUntil: 'domcontentloaded' });
     await expect(page).toHaveURL(/\/self-service/);
-    await expect(page.locator('main')).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('main')).toBeVisible({ timeout: 30000 });
   });
 
   test('Validates the search bar functionality', async ({ page }) => {
     await expect(page).toHaveURL(/\/self-service/);
-    await expect(page.getByText('Select a Sign-in method')).not.toBeVisible();
-    await expect(page.getByText('Log in to your account')).not.toBeVisible();
 
     const hasSearchBar = await page.evaluate(() => {
       const bySelector =

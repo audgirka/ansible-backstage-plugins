@@ -11,15 +11,16 @@ dotenv.config();
 export default defineConfig({
   testDir: './playwright/tests',
 
-  // Serial execution within worker to maintain shared browser context
+  // File-level parallelism: tests within a file run serially (shared context),
+  // but different files run in parallel across workers
   fullyParallel: false,
-  workers: 1, // Single worker to share browser context across all tests
+  workers: process.env.CI ? 2 : undefined, // 2 workers on CI, auto locally
 
   // Retry configuration
   retries: process.env.CI ? 1 : 0,
 
   // Global timeout prevents runaway CI builds
-  globalTimeout: process.env.CI ? 10 * 60 * 1000 : undefined, // 10 min total on CI
+  globalTimeout: process.env.CI ? 15 * 60 * 1000 : undefined, // 15 min total on CI
 
   // Timeouts (configurable via environment variables for CI)
   // Recommended CI values: PLAYWRIGHT_TEST_TIMEOUT=90000 (90s)
@@ -68,13 +69,14 @@ export default defineConfig({
     ignoreHTTPSErrors: true,
   },
 
-  // Test projects - using shared browser context for session persistence
+  // Single project — auth is handled per-worker by the auth-context fixture
+  // (shared browser context with live OAuth session, no storageState needed)
   projects: [
     {
       name: 'chromium',
       use: {
         ...devices['Desktop Chrome'],
-        channel: 'chrome', // Use system-installed Chrome, skip Playwright Chromium download
+        channel: 'chrome',
       },
     },
   ],

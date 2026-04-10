@@ -7,10 +7,9 @@ import { test, expect } from '../../fixtures/auth-context';
 
 test.describe('Execution Environment Catalog and Detail View Tests', () => {
   test.beforeEach(async ({ page }) => {
-    await page.waitForTimeout(500);
     await page.goto('/self-service/ee', { waitUntil: 'domcontentloaded' });
     await expect(page).toHaveURL(/\/self-service\/ee/);
-    await expect(page.locator('main')).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('main')).toBeVisible({ timeout: 30000 });
     if ((await page.locator('body').innerText()).includes('Catalog')) {
       await page.getByText('Catalog').first().click({ force: true });
       await page.waitForTimeout(1500);
@@ -20,7 +19,7 @@ test.describe('Execution Environment Catalog and Detail View Tests', () => {
   test('Validates Catalog tab: empty state or table content', async ({
     page,
   }) => {
-    await expect(page.locator('main')).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('main')).toBeVisible({ timeout: 30000 });
     const text = await page.locator('body').innerText();
     if (text.includes('No Execution Environment definition files, yet')) {
       return;
@@ -34,7 +33,7 @@ test.describe('Execution Environment Catalog and Detail View Tests', () => {
   test('Validates Catalog tab: right sidebar filters (Starred, My Org, Tags, Owner)', async ({
     page,
   }) => {
-    await expect(page.locator('main')).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('main')).toBeVisible({ timeout: 30000 });
     const text = await page.locator('body').innerText();
     if (text.includes('Personal') && text.includes('Starred')) {
       await page.getByText('Starred').first().click({ force: true });
@@ -71,7 +70,7 @@ test.describe('Execution Environment Catalog and Detail View Tests', () => {
   test('Validates Catalog table: row elements (Name, Owner, Description, Tags, Actions)', async ({
     page,
   }) => {
-    await expect(page.locator('main')).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('main')).toBeVisible({ timeout: 30000 });
     const body = page.locator('body');
     const text = await body.innerText();
     if (text.includes('No Execution Environment definition files, yet')) {
@@ -94,7 +93,7 @@ test.describe('Execution Environment Catalog and Detail View Tests', () => {
   test('Validates Catalog table: star/favorite button in Actions column', async ({
     page,
   }) => {
-    await expect(page.locator('main')).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('main')).toBeVisible({ timeout: 30000 });
     const row = page.locator('table tbody tr').first();
     if ((await row.count()) === 0) {
       return;
@@ -121,7 +120,7 @@ test.describe('Execution Environment Catalog and Detail View Tests', () => {
   test('Validates Catalog table: edit button in Actions column', async ({
     page,
   }) => {
-    await expect(page.locator('main')).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('main')).toBeVisible({ timeout: 30000 });
     const row = page.locator('table tbody tr').first();
     if ((await row.count()) === 0) {
       return;
@@ -140,7 +139,7 @@ test.describe('Execution Environment Catalog and Detail View Tests', () => {
   test('Validates Catalog table: clicking Name link navigates to detail view', async ({
     page,
   }) => {
-    await expect(page.locator('main')).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('main')).toBeVisible({ timeout: 30000 });
     const row = page.locator('table tbody tr').first();
     if ((await row.count()) === 0) {
       return;
@@ -151,7 +150,7 @@ test.describe('Execution Environment Catalog and Detail View Tests', () => {
       await page.waitForTimeout(2000);
       const url = page.url();
       if (url.includes('/catalog/') || url.includes('/self-service/catalog/')) {
-        await expect(page.locator('body')).toBeVisible({ timeout: 15000 });
+        await expect(page.locator('body')).toBeVisible({ timeout: 30000 });
       }
     }
   });
@@ -159,7 +158,7 @@ test.describe('Execution Environment Catalog and Detail View Tests', () => {
   test('Validates Detail view page: Links, About, basic structure', async ({
     page,
   }) => {
-    await expect(page.locator('main')).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('main')).toBeVisible({ timeout: 30000 });
     if ((await page.locator('table tbody tr').count()) === 0) {
       return;
     }

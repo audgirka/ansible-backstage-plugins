@@ -6,16 +6,16 @@ import { test, expect } from '../../fixtures/auth-context';
 
 test.describe('History - Task Execution History Tests', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/self-service', { waitUntil: 'domcontentloaded' });
     await page.goto('/self-service/create/tasks', {
       waitUntil: 'domcontentloaded',
     });
-    await page.waitForTimeout(2000);
+    await expect(page).toHaveURL(/\/self-service/);
+    await expect(page.locator('main')).toBeVisible({ timeout: 30000 });
   });
 
   test('Should load the task history page successfully', async ({ page }) => {
     await expect(page).toHaveURL(/\/self-service\/create\/tasks/);
-    await expect(page.locator('main')).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('main')).toBeVisible({ timeout: 30000 });
   });
 
   test('Should display task history content', async ({ page }) => {

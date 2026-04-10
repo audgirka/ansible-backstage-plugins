@@ -12,7 +12,7 @@ test.describe('Unregister EE Template', () => {
   }) => {
     await page.goto('/self-service/ee', { waitUntil: 'domcontentloaded' });
     await expect(page).toHaveURL(/\/self-service\/ee/);
-    await expect(page.locator('main')).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('main')).toBeVisible({ timeout: 30000 });
 
     const bodyText = await page.locator('body').innerText();
     if (!bodyText.includes('Create')) {

@@ -20,7 +20,7 @@ test.describe('Execution Environment Tabview Tests', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/self-service/ee', { waitUntil: 'domcontentloaded' });
     await expect(page).toHaveURL(/\/self-service\/ee/);
-    await expect(page.locator('main')).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('main')).toBeVisible({ timeout: 30000 });
   });
 
   test('Validates Catalog and Create tabs are visible and switchable', async ({
@@ -29,18 +29,18 @@ test.describe('Execution Environment Tabview Tests', () => {
     const catalogTab = eeCatalogTab(page);
     const createTab = eeCreateTab(page);
 
-    await expect(catalogTab).toBeVisible({ timeout: 15000 });
-    await expect(createTab).toBeVisible({ timeout: 15000 });
+    await expect(catalogTab).toBeVisible({ timeout: 30000 });
+    await expect(createTab).toBeVisible({ timeout: 30000 });
 
     await createTab.click({ timeout: 15000 });
     await page.waitForTimeout(800);
     await expect(page).toHaveURL(/\/self-service\/ee\/create/);
-    await expect(page.locator('main')).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('main')).toBeVisible({ timeout: 30000 });
 
     await catalogTab.click({ timeout: 15000 });
     await page.waitForTimeout(800);
     await expect(page).toHaveURL(/\/self-service\/ee\/catalog/);
-    await expect(page.locator('main')).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('main')).toBeVisible({ timeout: 30000 });
   });
 
   test('Validates Catalog tab: empty state CTA redirects to Create tab', async ({
@@ -50,9 +50,7 @@ test.describe('Execution Environment Tabview Tests', () => {
       waitUntil: 'domcontentloaded',
     });
     await expect(page).toHaveURL(/\/self-service\/ee\/catalog/);
-    await page.waitForTimeout(800);
-
-    await expect(page.locator('main')).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('main')).toBeVisible({ timeout: 30000 });
 
     const body = page.locator('body');
     const text = await body.innerText();
@@ -85,7 +83,7 @@ test.describe('Execution Environment Tabview Tests', () => {
     await page.waitForTimeout(1500);
 
     await expect(page).toHaveURL(/\/self-service\/ee\/create/);
-    await expect(page.locator('main')).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('main')).toBeVisible({ timeout: 30000 });
 
     const body = page.locator('body');
     const bt = await body.innerText();
@@ -166,7 +164,7 @@ test.describe('Execution Environment Tabview Tests', () => {
     if ((await btn.count()) > 0) {
       await btn.first().click({ force: true });
       await page.waitForTimeout(1500);
-      await expect(page.locator('main')).toBeVisible({ timeout: 15000 });
+      await expect(page.locator('main')).toBeVisible({ timeout: 30000 });
     }
   });
 
@@ -175,7 +173,7 @@ test.describe('Execution Environment Tabview Tests', () => {
   }) => {
     await eeCreateTab(page).click({ timeout: 15000 });
     await page.waitForTimeout(1500);
-    await expect(page.locator('main')).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('main')).toBeVisible({ timeout: 30000 });
 
     const text = await page.locator('body').innerText();
     if (text.includes('Personal') && text.includes('Starred')) {

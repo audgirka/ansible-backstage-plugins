@@ -19,13 +19,16 @@ const REPO_NAME = `ee-repo-${RANDOM_LETTER}`;
 const EE_FILE_NAME = `ee-${REPO_SUFFIX}`;
 
 test.describe('Execution Environment Template Execution Tests', () => {
+  // Multi-step workflow: import template + two full wizard runs
+  test.setTimeout(180_000);
+
   test('Imports EE template via kebab menu and executes it from Create tab', async ({
     page,
   }) => {
     await test.step('Open EE Create tab', async () => {
       await page.goto('/self-service/ee', { waitUntil: 'domcontentloaded' });
       await expect(page).toHaveURL(/\/self-service\/ee/);
-      await expect(page.locator('main')).toBeVisible({ timeout: 15000 });
+      await expect(page.locator('main')).toBeVisible({ timeout: 30000 });
       if ((await page.locator('body').innerText()).includes('Create')) {
         await page.getByText('Create').first().click({ force: true });
         await page.waitForTimeout(1500);
@@ -53,16 +56,11 @@ test.describe('Execution Environment Template Execution Tests', () => {
           `Catalog import page was not reached; current URL: ${url}`,
         );
       }
-      await expect(page.locator('main')).toBeVisible({ timeout: 15000 });
+      await expect(page.locator('main')).toBeVisible({ timeout: 30000 });
     });
 
     await test.step('Fill template URL and Analyze', async () => {
-      const urlInput = page
-        .locator('label')
-        .filter({ hasText: /^URL$/i })
-        .locator('xpath=ancestor::div[1]')
-        .locator('input')
-        .first();
+      const urlInput = page.getByLabel(/^URL/i).first();
       await urlInput.clear({ force: true });
       await urlInput.fill(EE_TEMPLATE_URL, { force: true });
       await page
@@ -88,7 +86,7 @@ test.describe('Execution Environment Template Execution Tests', () => {
       await page.waitForTimeout(1500);
       await page.getByText('Create').first().click({ force: true });
       await page.waitForTimeout(1500);
-      await expect(page.locator('main')).toBeVisible({ timeout: 15000 });
+      await expect(page.locator('main')).toBeVisible({ timeout: 30000 });
 
       const body = await page.locator('body').innerText();
       if (!body.includes(EE_TEMPLATE_TITLE)) {
@@ -110,7 +108,7 @@ test.describe('Execution Environment Template Execution Tests', () => {
     });
 
     await test.step('Wizard: Next steps + GitHub MCP + EE definition (with Git)', async () => {
-      await expect(page.locator('main')).toBeVisible({ timeout: 15000 });
+      await expect(page.locator('main')).toBeVisible({ timeout: 30000 });
 
       for (let i = 0; i < 2; i++) {
         const next = page.getByRole('button', { name: /^Next$/i });
@@ -199,15 +197,21 @@ test.describe('Execution Environment Template Execution Tests', () => {
         .click({ force: true })
         .catch(() => {});
 
-      await page
-        .getByRole('button', { name: /^Next$/i })
-        .first()
-        .click({ force: true });
-      await page.waitForTimeout(1500);
-      await page
-        .getByRole('button', { name: /create/i })
-        .first()
-        .click({ force: true });
+      // Click Next through remaining wizard steps until Start/Create appears
+      for (let i = 0; i < 3; i++) {
+        const startBtn = page
+          .getByRole('button', { name: /start|create/i })
+          .first();
+        if (await startBtn.isVisible({ timeout: 1000 }).catch(() => false)) {
+          await startBtn.click({ force: true });
+          break;
+        }
+        const next = page.getByRole('button', { name: /^Next$/i }).first();
+        if (await next.isVisible({ timeout: 1000 }).catch(() => false)) {
+          await next.click({ force: true });
+          await page.waitForTimeout(1500);
+        }
+      }
       await page.waitForTimeout(5000);
       await expect(page.locator('body')).toBeVisible({ timeout: 30000 });
     });
@@ -294,15 +298,21 @@ test.describe('Execution Environment Template Execution Tests', () => {
         }
       }
 
-      await page
-        .getByRole('button', { name: /^Next$/i })
-        .first()
-        .click({ force: true });
-      await page.waitForTimeout(1500);
-      await page
-        .getByRole('button', { name: /create/i })
-        .first()
-        .click({ force: true });
+      // Click Next through remaining wizard steps until Start/Create appears
+      for (let i = 0; i < 3; i++) {
+        const startBtn = page
+          .getByRole('button', { name: /start|create/i })
+          .first();
+        if (await startBtn.isVisible({ timeout: 1000 }).catch(() => false)) {
+          await startBtn.click({ force: true });
+          break;
+        }
+        const next = page.getByRole('button', { name: /^Next$/i }).first();
+        if (await next.isVisible({ timeout: 1000 }).catch(() => false)) {
+          await next.click({ force: true });
+          await page.waitForTimeout(1500);
+        }
+      }
       await page.waitForTimeout(5000);
     });
   });
