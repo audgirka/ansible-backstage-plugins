@@ -1,0 +1,100 @@
+app:
+  title: Ansible Portal - Local Dev
+  baseUrl: http://localhost:7007
+
+backend:
+  auth:
+    keys:
+      - secret: development-secret-do-not-use-in-production
+  baseUrl: http://localhost:7007
+  listen:
+    host: 0.0.0.0
+    port: 7007
+  csp:
+    connect-src: ["'self'", 'http:', 'https:']
+    upgrade-insecure-requests: false
+  cors:
+    origin: http://localhost:7007
+    methods: [GET, HEAD, PATCH, POST, PUT, DELETE]
+    credentials: true
+  database:
+    client: better-sqlite3
+    connection: ':memory:'
+
+auth:
+  environment: development
+  providers:
+    guest:
+      dangerouslyAllowOutsideDevelopment: true
+    rhaap:
+      development:
+        host: ${AAP_HOST:-https://aap.example.com}
+        checkSSL: false
+        clientId: ${AAP_AUTH_CLIENT_ID}
+        clientSecret: ${AAP_AUTH_CLIENT_SECRET}
+        signIn:
+          resolvers:
+            - resolver: allowNewAAPUserSignIn
+
+dynamicPlugins:
+  rootDirectory: dynamic-plugins-root
+  frontend:
+    ansible.plugin-backstage-self-service:
+      signInPage:
+        importName: SignInPage
+      providerSettings:
+        - title: RHAAP
+          description: Sign in with RHAAP
+          provider: ansible.auth.rhaap
+        - title: Guest
+          description: Sign in as guest
+          provider: guest
+        - title: GitHub
+          description: Sign in with GitHub
+          provider: github
+      scaffolderFieldExtensions:
+        - importName: AAPTokenFieldExtension
+        - importName: AAPResourcePickerExtension
+        - importName: AdditionalBuildStepsPickerFieldExtension
+        - importName: BaseImagePickerFieldExtension
+        - importName: CollectionsPickerFieldExtension
+        - importName: EEFileNamePickerExtension
+        - importName: FileUploadPickerFieldExtension
+        - importName: PackagesPickerFieldExtension
+        - importName: MCPServersPickerFieldExtension
+      dynamicRoutes:
+        - importName: LandingPage
+          path: /
+        - importName: SelfServicePage
+          path: /self-service
+        - importName: ExecutionEnvironmentPage
+          path: /self-service/ee
+      mountPoints:
+        - mountPoint: application/listener
+          importName: LocationListener
+
+ansible:
+  auth:
+    enabledProviders:
+      - rhaap
+      - guest
+      - github
+      - gitlab
+  rhaap:
+    baseUrl: ${AAP_HOST:-https://aap.example.com}
+    token: ${AAP_API_TOKEN:-placeholder}
+    checkSSL: false
+  creatorService:
+    baseUrl: localhost
+    port: '8000'
+
+catalog:
+  rules:
+    - allow:
+        - Component
+        - System
+        - Group
+        - Resource
+        - Location
+        - Template
+        - API
