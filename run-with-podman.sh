@@ -2,8 +2,9 @@
 set -euo pipefail
 
 DEPLOY_DIR="${DEPLOY_DIR:-./deploy}"
-APP_IMAGE="${APP_IMAGE:-registry.redhat.io/rhdh/rhdh-hub-rhel9:1.9}"
+APP_IMAGE="${APP_IMAGE:-registry.redhat.io/rhdh/rhdh-hub-rhel9:1.10}"
 APP_CONFIG="${APP_CONFIG:-./app-config.podman.yaml}"
+DYNAMIC_PLUGINS_CONFIG="${DYNAMIC_PLUGINS_CONFIG:-./dynamic-plugins.podman.yaml}"
 PORT="${PORT:-7007}"
 ENV_FILE="${ENV_FILE:-.env}"
 
@@ -27,10 +28,18 @@ if [ -f "$ENV_FILE" ]; then
   ENV_ARGS+=(--env-file "$ENV_FILE")
 fi
 
+MOUNT_ARGS=()
+MOUNT_ARGS+=(-v "$(realpath "$DEPLOY_DIR"):/opt/app-root/src/dynamic-plugins-root:Z")
+MOUNT_ARGS+=(-v "$(realpath "$APP_CONFIG"):/opt/app-root/src/app-config.yaml:Z")
+
+if [ -f "$DYNAMIC_PLUGINS_CONFIG" ]; then
+  echo "Dynamic plugins config: $DYNAMIC_PLUGINS_CONFIG"
+  MOUNT_ARGS+=(-v "$(realpath "$DYNAMIC_PLUGINS_CONFIG"):/opt/app-root/src/dynamic-plugins.yaml:Z")
+fi
+
 podman run --rm \
   "${ENV_ARGS[@]}" \
-  -v "$(realpath "$DEPLOY_DIR"):/opt/app-root/src/dynamic-plugins-root:Z" \
-  -v "$(realpath "$APP_CONFIG"):/opt/app-root/src/app-config.yaml:Z" \
+  "${MOUNT_ARGS[@]}" \
   -p "$PORT:7007" \
   --entrypoint='["node", "packages/backend", "--config", "app-config.yaml"]' \
   "$APP_IMAGE"

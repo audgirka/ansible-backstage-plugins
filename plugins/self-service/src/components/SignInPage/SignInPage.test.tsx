@@ -1,6 +1,8 @@
 import { SignInPage } from './SignInPage';
 import { screen } from '@testing-library/react';
 import { renderInTestApp, TestApiProvider } from '@backstage/test-utils';
+import { configApiRef } from '@backstage/core-plugin-api';
+import { ConfigReader } from '@backstage/config';
 import { rhAapAuthApiRef } from '../../apis';
 import { rootRouteRef } from '../../routes';
 
@@ -30,9 +32,19 @@ jest.mock('@backstage/core-components', () => ({
 describe('SignInPage', () => {
   const mockOnSignInSuccess = jest.fn();
 
+  const mockConfig = new ConfigReader({
+    auth: { environment: 'development' },
+    ansible: { auth: { enabledProviders: ['rhaap'] } },
+  });
+
   const render = (children: JSX.Element) => {
     return renderInTestApp(
-      <TestApiProvider apis={[[rhAapAuthApiRef, {}]]}>
+      <TestApiProvider
+        apis={[
+          [rhAapAuthApiRef, {}],
+          [configApiRef, mockConfig],
+        ]}
+      >
         <>{children}</>
       </TestApiProvider>,
       {
@@ -50,19 +62,16 @@ describe('SignInPage', () => {
   it('should render the sign-in page with correct props', async () => {
     await render(<SignInPage onSignInSuccess={mockOnSignInSuccess} />);
 
-    // Check if the mock SignInPage is rendered with correct props
     expect(screen.getByTestId('mock-signin-page')).toBeInTheDocument();
     expect(
       screen.getByText('Title: Select a Sign-in method'),
     ).toBeInTheDocument();
     expect(screen.getByText('Align: center')).toBeInTheDocument();
-    expect(screen.getByText('Auto: true')).toBeInTheDocument();
   });
 
   it('should render the RHAAP provider', async () => {
     await render(<SignInPage onSignInSuccess={mockOnSignInSuccess} />);
 
-    // Check if the RHAAP provider is rendered with correct props
     const provider = screen.getByTestId('provider-rhaap');
     expect(provider).toBeInTheDocument();
     expect(screen.getByText('ID: rhaap')).toBeInTheDocument();

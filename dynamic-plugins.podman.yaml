@@ -1,0 +1,114 @@
+includes:
+  - dynamic-plugins.default.yaml
+plugins:
+  # RBAC
+  - package: ./dynamic-plugins/dist/backstage-community-plugin-rbac
+    disabled: false
+
+  # Ansible backend plugins (loaded from dynamic-plugins-root)
+  - package: ./dynamic-plugins-root/ansible-plugin-scaffolder-backend-module-backstage-rhaap
+    disabled: false
+    pluginConfig:
+      dynamicPlugins:
+        backend:
+          ansible.plugin-scaffolder-backend-module-backstage-rhaap:
+
+  - package: ./dynamic-plugins-root/ansible-backstage-plugin-catalog-backend-module-rhaap
+    disabled: false
+
+  - package: ./dynamic-plugins-root/ansible-backstage-plugin-auth-backend-module-rhaap-provider
+    disabled: false
+    pluginConfig: {}
+
+  # Ansible frontend - self-service
+  - package: ./dynamic-plugins-root/ansible-plugin-backstage-self-service
+    disabled: false
+    pluginConfig:
+      dynamicPlugins:
+        frontend:
+          ansible.plugin-backstage-self-service:
+            signInPage:
+              importName: SignInPage
+            providerSettings:
+              - title: RHAAP
+                description: Sign in with RHAAP
+                provider: ansible.auth.rhaap
+            scaffolderFieldExtensions:
+              - importName: AAPTokenFieldExtension
+              - importName: AAPResourcePickerExtension
+              - importName: AdditionalBuildStepsPickerFieldExtension
+              - importName: BaseImagePickerFieldExtension
+              - importName: CollectionsPickerFieldExtension
+              - importName: EEFileNamePickerExtension
+              - importName: FileUploadPickerFieldExtension
+              - importName: PackagesPickerFieldExtension
+              - importName: MCPServersPickerFieldExtension
+              - importName: ScmSelectorFieldExtension
+            dynamicRoutes:
+              - importName: LandingPage
+                path: /
+              - importName: SelfServicePage
+                path: /self-service/*
+              - importName: SelfServicePage
+                path: /self-service
+                menuItem:
+                  importName: TemplatesSidebarItem
+              - importName: HistoryPage
+                path: /self-service/create/tasks
+                menuItem:
+                  importName: HistorySidebarItem
+              - importName: EEPage
+                path: /self-service/ee/*
+              - importName: EEPage
+                path: /self-service/ee
+                menuItem:
+                  importName: EEBuilderSidebarItem
+              - importName: CollectionsPage
+                path: /self-service/collections
+                menuItem:
+                  importName: CollectionsSidebarItem
+              - importName: CollectionsPage
+                path: /self-service/collections/*
+              - importName: GitRepositoriesPage
+                path: /self-service/repositories
+                menuItem:
+                  importName: GitRepositoriesSidebarItem
+              - importName: GitRepositoriesPage
+                path: /self-service/repositories/*
+            mountPoints:
+              - mountPoint: application/listener
+                importName: LocationListener
+              - mountPoint: application/listener
+                importName: AppThemeFixer
+              - importName: AAPLogoutButton
+                mountPoint: global.header/profile
+                config:
+                  priority: 100
+
+  # RHDH global header (enabled in defaults but ensure it stays on)
+  - package: ./dynamic-plugins/dist/red-hat-developer-hub-backstage-plugin-global-header
+    disabled: false
+
+  # GitHub/GitLab scaffolder backends
+  - package: ./dynamic-plugins/dist/backstage-plugin-scaffolder-backend-module-github-dynamic
+    disabled: false
+  - package: ./dynamic-plugins/dist/backstage-plugin-scaffolder-backend-module-gitlab-dynamic
+    disabled: false
+
+  # Disabled RHDH plugins (match helm chart)
+  - package: ./dynamic-plugins/dist/red-hat-developer-hub-backstage-plugin-catalog-backend-module-marketplace-dynamic
+    disabled: true
+  - package: ./dynamic-plugins/dist/red-hat-developer-hub-backstage-plugin-quickstart
+    disabled: true
+  - package: ./dynamic-plugins/dist/red-hat-developer-hub-backstage-plugin-adoption-insights
+    disabled: true
+  - package: ./dynamic-plugins/dist/red-hat-developer-hub-backstage-plugin-adoption-insights-backend-dynamic
+    disabled: true
+  - package: ./dynamic-plugins/dist/red-hat-developer-hub-backstage-plugin-dynamic-home-page
+    disabled: true
+  - package: ./dynamic-plugins/dist/red-hat-developer-hub-backstage-plugin-marketplace
+    disabled: true
+  - package: ./dynamic-plugins/dist/red-hat-developer-hub-backstage-plugin-marketplace-backend-dynamic
+    disabled: true
+  - package: ./dynamic-plugins/dist/red-hat-developer-hub-backstage-plugin-global-floating-action-button
+    disabled: true

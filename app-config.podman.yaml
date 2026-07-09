@@ -1,3 +1,6 @@
+signInPage: rhaap
+enableExperimentalRedirectFlow: true
+
 app:
   title: Ansible Portal - Local Dev
   baseUrl: http://localhost:7007
@@ -46,12 +49,6 @@ dynamicPlugins:
         - title: RHAAP
           description: Sign in with RHAAP
           provider: ansible.auth.rhaap
-        - title: Guest
-          description: Sign in as guest
-          provider: guest
-        - title: GitHub
-          description: Sign in with GitHub
-          provider: github
       scaffolderFieldExtensions:
         - importName: AAPTokenFieldExtension
         - importName: AAPResourcePickerExtension
@@ -62,16 +59,47 @@ dynamicPlugins:
         - importName: FileUploadPickerFieldExtension
         - importName: PackagesPickerFieldExtension
         - importName: MCPServersPickerFieldExtension
+        - importName: ScmSelectorFieldExtension
       dynamicRoutes:
         - importName: LandingPage
           path: /
         - importName: SelfServicePage
           path: /self-service
-        - importName: ExecutionEnvironmentPage
+        - importName: TemplatesPage
+          path: /self-service/*
+          menuItem:
+            importName: TemplatesSidebarItem
+        - importName: HistoryPage
+          path: /self-service/create/tasks
+          menuItem:
+            importName: HistorySidebarItem
+        - importName: EEPage
+          path: /self-service/ee/*
+        - importName: EEPage
           path: /self-service/ee
+          menuItem:
+            importName: EEBuilderSidebarItem
+        - importName: CollectionsPage
+          path: /self-service/collections
+          menuItem:
+            importName: CollectionsSidebarItem
+        - importName: CollectionsPage
+          path: /self-service/collections/*
+        - importName: GitRepositoriesPage
+          path: /self-service/repositories
+          menuItem:
+            importName: GitRepositoriesSidebarItem
+        - importName: GitRepositoriesPage
+          path: /self-service/repositories/*
       mountPoints:
         - mountPoint: application/listener
           importName: LocationListener
+        - mountPoint: application/listener
+          importName: AppThemeFixer
+        - importName: AAPLogoutButton
+          mountPoint: global.header/profile
+          config:
+            priority: 100
 
 ansible:
   auth:
@@ -88,7 +116,44 @@ ansible:
     baseUrl: localhost
     port: '8000'
 
+permission:
+  enabled: true
+  rbac:
+    # if you want to use a csv file for rbac, uncomment the following lines.
+    # Refer default-rbac-policy.csv for the policy file.
+    # policies-csv-file: /Users/audgirka/src/ansible-backstage-plugins/default-rbac-policy.csv
+    # policyFileReload: true
+    admin:
+      users:
+        - name: user:default/admin              
+        - name: group:default/aap-admins        
+      superUsers:
+        - name: user:default/admin              
+        - name: group:default/aap-admins        
+    # Plugins that require permission evaluation
+    pluginsWithPermission:
+      - catalog
+      - scaffolder
+      - permission
+
 catalog:
+  providers:
+    rhaap:
+      dev:
+        baseUrl: ${AAP_HOST:-https://aap.example.com}
+        authorization: Bearer ${AAP_API_TOKEN:-placeholder}
+        checkSSL: false
+        orgs: Default
+        sync:
+          orgsUsersTeams:
+            schedule:
+              frequency: { minutes: 2 }
+              timeout: { seconds: 30 }
+          jobTemplates:
+            enabled: true
+            schedule:
+              frequency: { minutes: 1 }
+              timeout: { seconds: 30 }
   rules:
     - allow:
         - Component
