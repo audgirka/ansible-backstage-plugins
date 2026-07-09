@@ -29,7 +29,7 @@ if [ -f "$ENV_FILE" ]; then
 fi
 
 MOUNT_ARGS=()
-MOUNT_ARGS+=(-v "$(realpath "$DEPLOY_DIR"):/opt/app-root/src/dynamic-plugins-root:Z")
+MOUNT_ARGS+=(-v "$(realpath "$DEPLOY_DIR"):/opt/app-root/src/local-plugins:Z")
 MOUNT_ARGS+=(-v "$(realpath "$APP_CONFIG"):/opt/app-root/src/app-config.yaml:Z")
 
 if [ -f "$DYNAMIC_PLUGINS_CONFIG" ]; then
@@ -41,5 +41,5 @@ podman run --rm \
   "${ENV_ARGS[@]}" \
   "${MOUNT_ARGS[@]}" \
   -p "$PORT:7007" \
-  --entrypoint='["node", "packages/backend", "--config", "app-config.yaml"]' \
+  --entrypoint='["bash", "-c", "./install-dynamic-plugins.sh /opt/app-root/src/dynamic-plugins-root && node packages/backend --config app-config.yaml --config dynamic-plugins-root/app-config.dynamic-plugins.yaml"]' \
   "$APP_IMAGE"

@@ -1,27 +1,47 @@
-includes:
-  - dynamic-plugins.default.yaml
 plugins:
   # RBAC
   - package: ./dynamic-plugins/dist/backstage-community-plugin-rbac
     disabled: false
+    pluginConfig:
+      dynamicPlugins:
+        frontend:
+          backstage-community.plugin-rbac:
+            appIcons:
+              - importName: RbacIcon
+                name: rbacIcon
+            dynamicRoutes:
+              - importName: RbacPage
+                path: /rbac
+                menuItem:
+                  icon: rbacIcon
+                  text: RBAC
+            menuItems:
+              rbac:
+                icon: rbacIcon
+                parent: default.admin
+          default.main-menu-items:
+            menuItems:
+              default.admin:
+                icon: admin
+                title: Administration
 
   # Ansible backend plugins (loaded from dynamic-plugins-root)
-  - package: ./dynamic-plugins-root/ansible-plugin-scaffolder-backend-module-backstage-rhaap
+  - package: ./local-plugins/ansible-plugin-scaffolder-backend-module-backstage-rhaap
     disabled: false
     pluginConfig:
       dynamicPlugins:
         backend:
           ansible.plugin-scaffolder-backend-module-backstage-rhaap:
 
-  - package: ./dynamic-plugins-root/ansible-backstage-plugin-catalog-backend-module-rhaap
+  - package: ./local-plugins/ansible-backstage-plugin-catalog-backend-module-rhaap
     disabled: false
 
-  - package: ./dynamic-plugins-root/ansible-backstage-plugin-auth-backend-module-rhaap-provider
+  - package: ./local-plugins/ansible-backstage-plugin-auth-backend-module-rhaap-provider
     disabled: false
     pluginConfig: {}
 
   # Ansible frontend - self-service
-  - package: ./dynamic-plugins-root/ansible-plugin-backstage-self-service
+  - package: ./local-plugins/ansible-plugin-backstage-self-service
     disabled: false
     pluginConfig:
       dynamicPlugins:
@@ -78,16 +98,53 @@ plugins:
             mountPoints:
               - mountPoint: application/listener
                 importName: LocationListener
-              - mountPoint: application/listener
-                importName: AppThemeFixer
               - importName: AAPLogoutButton
                 mountPoint: global.header/profile
                 config:
                   priority: 100
 
-  # RHDH global header (enabled in defaults but ensure it stays on)
+  # RHDH global header
   - package: ./dynamic-plugins/dist/red-hat-developer-hub-backstage-plugin-global-header
     disabled: false
+    pluginConfig:
+      dynamicPlugins:
+        frontend:
+          red-hat-developer-hub.backstage-plugin-global-header:
+            mountPoints:
+              - mountPoint: application/header
+                importName: GlobalHeader
+                config:
+                  position: above-main-content
+              - mountPoint: global.header/component
+                importName: Spacer
+                config:
+                  priority: 99
+                  props:
+                    growFactor: 1
+              - mountPoint: global.header/component
+                importName: HeaderIconButton
+                config:
+                  priority: 90
+                  props:
+                    icon: add
+                    title: Create...
+                    to: /self-service/catalog
+              - mountPoint: global.header/component
+                importName: HeaderIconButton
+                config:
+                  priority: 85
+                  props:
+                    icon: support
+                    title: Support
+                    to: https://access.redhat.com/support
+              - mountPoint: global.header/component
+                importName: Divider
+                config:
+                  priority: 50
+              - mountPoint: global.header/component
+                importName: ProfileDropdown
+                config:
+                  priority: 10
 
   # GitHub/GitLab scaffolder backends
   - package: ./dynamic-plugins/dist/backstage-plugin-scaffolder-backend-module-github-dynamic
