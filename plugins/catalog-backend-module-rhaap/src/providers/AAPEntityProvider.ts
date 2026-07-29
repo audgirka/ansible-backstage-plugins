@@ -24,6 +24,7 @@ import { readAapApiEntityConfigs } from './config';
 import { organizationParser, teamParser, userParser } from './entityParser';
 import { resolveTaskRunner } from './helpers';
 import { SyncStateTracker } from './SyncStateTracker';
+import type { SignalsService } from '@backstage/plugin-signals-node';
 import { AapConfig } from './types';
 
 export class AAPEntityProvider implements EntityProvider {
@@ -105,6 +106,10 @@ export class AAPEntityProvider implements EntityProvider {
 
   getLastSyncTime(): string | null {
     return this.syncState.getLastSyncTime();
+  }
+
+  setSignals(signals: SignalsService): void {
+    this.syncState.setSignals(signals, `aap-entity:${this.env}`);
   }
 
   getLastFailedSyncTime(): string | null {
