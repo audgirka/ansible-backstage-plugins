@@ -25,7 +25,9 @@
     "prettier:check": "prettier --check .",
     "new": "backstage-cli new",
     "openapi:lint": "spectral lint api/openapi.yaml --ruleset api/.spectral.yaml",
-    "openapi:check-drift": "node api/scripts/check-drift.mjs"
+    "openapi:check-drift": "node api/scripts/check-drift.mjs",
+    "dev": "./run-with-podman.sh",
+    "dev:watch": "npx nodemon --watch plugins --ext ts,tsx --ignore '**/dist/**' --ignore '**/dist-dynamic/**' --ignore '**/node_modules/**' --ignore '**/*.test.*' --delay 3 --exec 'rm -rf plugins/*/dist-dynamic && yarn build && rm -rf deploy && ./node_modules/.bin/rhdh-cli plugin package --export-to deploy && SKIP_BUILD=true ./run-with-podman.sh'"
   },
   "workspaces": {
     "packages": [

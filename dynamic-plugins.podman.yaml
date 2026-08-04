@@ -146,6 +146,16 @@ plugins:
                 config:
                   priority: 10
 
+  # Backstage Signals (WebSocket push for sync state)
+  - package: ./dynamic-plugins/dist/backstage-plugin-signals-backend-dynamic
+    disabled: false
+  - package: ./dynamic-plugins/dist/backstage-plugin-signals
+    disabled: false
+    pluginConfig:
+      dynamicPlugins:
+        frontend:
+          backstage.plugin-signals: {}
+
   # GitHub/GitLab scaffolder backends
   - package: ./dynamic-plugins/dist/backstage-plugin-scaffolder-backend-module-github-dynamic
     disabled: false
